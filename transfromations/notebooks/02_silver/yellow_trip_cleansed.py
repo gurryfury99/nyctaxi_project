@@ -2,9 +2,7 @@
 import sys
 import os
 
-# Go three levels up to reach the project root.
-# The lecturer's layout is two levels; ours has an extra `transfromations`
-# folder, so these notebooks sit one level deeper.
+
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:
@@ -17,8 +15,6 @@ from modules.utils.date_utils import get_month_start_n_months_ago
 
 # COMMAND ----------
 
-# The lecturer uses 2 and 1. Our landing volume holds 2025-12 .. 2026-04,
-# so 4 and 3 select 2026-04 - the newest month in our five-month scope.
 
 # Get the first day of the target month
 two_months_ago_start = get_month_start_n_months_ago(4)
@@ -28,9 +24,7 @@ one_month_ago_start = get_month_start_n_months_ago(3)
 
 # COMMAND ----------
 
-# Read the 'yellow_trips_raw' table from the bronze schema
-# Then filter rows where 'tpep_pickup_datetime' is >= two months ago start
-# and < one month ago start (i.e., only the month that is two months before today)
+
 df = spark.read.table("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw").filter(
     f"tpep_pickup_datetime >= '{two_months_ago_start}' AND tpep_pickup_datetime < '{one_month_ago_start}'"
 )

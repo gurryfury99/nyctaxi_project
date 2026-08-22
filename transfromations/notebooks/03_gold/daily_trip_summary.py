@@ -2,9 +2,6 @@
 import sys
 import os
 
-# Go three levels up to reach the project root.
-# The lecturer's layout is two levels; ours has an extra `transfromations`
-# folder, so these notebooks sit one level deeper.
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:
@@ -17,9 +14,7 @@ from modules.utils.date_utils import get_month_start_n_months_ago
 
 # COMMAND ----------
 
-# Get the first day of the target month.
-# The lecturer uses 2; our landing volume holds 2025-12 .. 2026-04, so 4
-# selects 2026-04 - the newest month in our five-month scope.
+
 two_months_ago_start = get_month_start_n_months_ago(4)
 
 # COMMAND ----------

@@ -2,9 +2,7 @@
 import sys
 import os
 
-# Go three levels up to reach the project root.
-# The lecturer's layout is two levels; ours has an extra `transfromations`
-# folder, so these notebooks sit one level deeper.
+
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:
@@ -18,10 +16,6 @@ from modules.transformations.metadata import add_processed_timestamp
 
 # COMMAND ----------
 
-# Obtains the year-month for the target month in yyyy-MM format.
-# The lecturer uses 2 (TLC's usual ~2-month publishing lag). Our landing
-# volume holds 2025-12 .. 2026-04 only, so 4 targets 2026-04 - the newest
-# month in this project's five-month scope.
 formatted_date = get_target_yyyymm(4)
 
 # Read all Parquet files for the specified month from the landing directory into a DataFrame
