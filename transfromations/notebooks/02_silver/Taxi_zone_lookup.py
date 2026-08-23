@@ -4,7 +4,9 @@ from pyspark.sql.types import TimestampType, IntegerType
 
 # COMMAND ----------
 
-df = spark.read.format("csv").option("header", True).load("/Volumes/nyctaxi_workspace/nyctaxi_landing/data_sources/lookup/taxi_zone_lookup.csv")
+# Read from 00_landing, the same volume ingest_lookup writes the CSV to.
+# The initial-load notebooks used nyctaxi_landing; the live pipeline is on 00_landing.
+df = spark.read.format("csv").option("header", True).load("/Volumes/nyctaxi_workspace/00_landing/data_sources/lookup/taxi_zone_lookup.csv")
 
 # COMMAND ----------
 

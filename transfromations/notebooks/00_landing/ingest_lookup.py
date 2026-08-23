@@ -2,9 +2,7 @@
 import sys
 import os
 
-# Go three levels up to reach the project root.
-# The lecturer's layout is two levels; ours has an extra `transfromations`
-# folder, so these notebooks sit one level deeper.
+
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:

@@ -20,11 +20,7 @@ from modules.data_loader.file_downloader import download_file
 
 # COMMAND ----------
 
-# Obtains the year-month for the target month in yyyy-MM format.
-# The lecturer uses 2 (TLC's usual ~2-month publishing lag). Our landing
-# volume holds 2025-12 .. 2026-04 only, so 4 targets 2026-04 - the newest
-# month in this project's five-month scope.
-formatted_date = get_target_yyyymm(4)
+formatted_date = get_target_yyyymm(3)
 
 # Define the local directory for this date's data
 dir_path = f"/Volumes/nyctaxi_workspace/00_landing/data_sources/nyctaxi_yellow/{formatted_date}"

@@ -2,9 +2,6 @@
 import sys
 import os
 
-# Go three levels up to reach the project root.
-# The lecturer's layout is two levels; ours has an extra `transfromations`
-# folder, so these notebooks sit one level deeper.
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:
@@ -17,17 +14,16 @@ from modules.utils.date_utils import get_month_start_n_months_ago
 
 # COMMAND ----------
 
-# Get the first day of the target month.
-# The lecturer uses 2; our landing volume holds 2025-12 .. 2026-04, so 4
-# selects 2026-04 - the newest month in our five-month scope.
-two_months_ago_start = get_month_start_n_months_ago(4)
+
+# The first month our backfill did not cover: 2026-05.
+target_month_start = get_month_start_n_months_ago(3)
 
 # COMMAND ----------
 
 # Load the enriched trip dataset
 # and filter to only include trips with a pickup datetime later than the start date from two months ago
 df = spark.read.table("nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched").filter(
-    f"tpep_pickup_datetime > '{two_months_ago_start}'"
+    f"tpep_pickup_datetime >= '{target_month_start}'"
 )
 
 # COMMAND ----------
