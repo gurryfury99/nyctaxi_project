@@ -84,16 +84,26 @@ display(dbutils.fs.ls("/Volumes/nyctaxi_workspace/"))
 
 # COMMAND ----------
 
-LANDING_SCHEMA = "00_landing"   # change to "nyctaxi_landing" if that is the one that exists
+# The live pipeline writes to 00_landing. nyctaxi_landing also exists in this
+# catalog but only holds the initial-load data.
+LANDING_SCHEMA = "00_landing"
 
 landing_folder = (
     f"/Volumes/nyctaxi_workspace/{LANDING_SCHEMA}"
     f"/data_sources/nyctaxi_yellow/{date_from.strftime('%Y-%m')}"
 )
 
-if DRY_RUN:
+try:
+    files = dbutils.fs.ls(landing_folder)
+except Exception:
+    files = None
+
+if files is None:
+    print(f"Nothing to delete - {landing_folder} does not exist.")
+    print("The job will download this month fresh.")
+elif DRY_RUN:
     print(f"[DRY RUN] would delete {landing_folder}")
-    display(dbutils.fs.ls(landing_folder))
+    display(files)
 else:
     dbutils.fs.rm(landing_folder, recurse=True)
     print(f"[DELETED] {landing_folder}")
