@@ -16,17 +16,19 @@ from modules.utils.date_utils import get_month_start_n_months_ago
 # COMMAND ----------
 
 
-# Get the first day of the target month
-two_months_ago_start = get_month_start_n_months_ago(4)
+# The target month is the first month our backfill did not cover. The backfill
+# ran 2025-12 .. 2026-04, so the month we do not have is 2026-05. The lecturer
+# uses 2 (TLC's publishing lag); for us 2 would jump to 2026-06 and leave a gap.
+target_month_start = get_month_start_n_months_ago(3)
 
-# Get the first day of the month after it
-one_month_ago_start = get_month_start_n_months_ago(3)
+# First day of the month after it - the upper bound of the window.
+next_month_start = get_month_start_n_months_ago(2)
 
 # COMMAND ----------
 
 
 df = spark.read.table("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw").filter(
-    f"tpep_pickup_datetime >= '{two_months_ago_start}' AND tpep_pickup_datetime < '{one_month_ago_start}'"
+    f"tpep_pickup_datetime >= '{target_month_start}' AND tpep_pickup_datetime < '{next_month_start}'"
 )
 
 # COMMAND ----------

@@ -20,7 +20,7 @@ from modules.data_loader.file_downloader import download_file
 
 # COMMAND ----------
 
-formatted_date = get_target_yyyymm(4)
+formatted_date = get_target_yyyymm(3)
 
 # Define the local directory for this date's data
 dir_path = f"/Volumes/nyctaxi_workspace/00_landing/data_sources/nyctaxi_yellow/{formatted_date}"

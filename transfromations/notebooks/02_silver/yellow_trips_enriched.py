@@ -15,12 +15,13 @@ from modules.utils.date_utils import get_month_start_n_months_ago
 # COMMAND ----------
 
 
-two_months_ago_start = get_month_start_n_months_ago(4)
+# The first month our backfill did not cover: 2026-05.
+target_month_start = get_month_start_n_months_ago(3)
 
 # COMMAND ----------
 
 df_trips = spark.read.table("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed").filter(
-    f"tpep_pickup_datetime >= '{two_months_ago_start}'"
+    f"tpep_pickup_datetime >= '{target_month_start}'"
 )
 
 # Load taxi zone lookup data from the Silver layer

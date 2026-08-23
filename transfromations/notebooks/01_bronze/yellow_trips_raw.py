@@ -16,7 +16,7 @@ from modules.transformations.metadata import add_processed_timestamp
 
 # COMMAND ----------
 
-formatted_date = get_target_yyyymm(4)
+formatted_date = get_target_yyyymm(3)
 
 # Read all Parquet files for the specified month from the landing directory into a DataFrame
 df = spark.read.format("parquet").load(f"/Volumes/nyctaxi_workspace/00_landing/data_sources/nyctaxi_yellow/{formatted_date}")
