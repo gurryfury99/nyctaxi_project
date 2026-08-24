@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 750" width="1320" height="750" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6E6E68"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1320" height="750" fill="#FCFCFA"/>
+
+  <text x="660" y="46" text-anchor="middle" font-size="27" font-weight="600" fill="#1C1C1A">Databricks Job</text>
+  <text x="660" y="72" text-anchor="middle" font-size="15" fill="#5E5E58">Creating a Databricks Job consisting of Notebook tasks</text>
+
+  <!-- note A: pipeline rules -->
+  <rect x="200" y="100" width="900" height="112" rx="3" fill="none" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="226" y="127" font-size="13.5" fill="#3A3A36">&#8226; For the yellow trip data the pipeline should process only one month&#8217;s data at a time</text>
+  <text x="226" y="150" font-size="13.5" fill="#3A3A36">&#8226; It will process the data for 3 months prior to the current month (our backfill ended 2026-04)</text>
+  <text x="226" y="173" font-size="13.5" fill="#3A3A36">&#8226; If the data is not available, or has already been processed, the pipeline will not process it again</text>
+  <text x="226" y="196" font-size="13.5" fill="#3A3A36">&#8226; Incremental, append only</text>
+
+  <g stroke="#A8A8A0" stroke-width="1" stroke-dasharray="3 4" fill="none">
+    <path d="M400 212 V300"/><path d="M640 212 V300"/><path d="M880 212 V300"/>
+  </g>
+
+  <!-- new in part 4 -->
+  <rect x="1005" y="424" width="230" height="98" rx="4" fill="none" stroke="#3F7A54" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="1005" y="415" font-size="12.5" fill="#3F7A54">New in part 4</text>
+
+  <!-- row 1 -->
+  <g stroke="#8E8E86" stroke-width="1">
+    <rect x="60"   y="300" width="200" height="64" rx="3" fill="#E9E9E4"/>
+    <rect x="300"  y="300" width="200" height="64" rx="3" fill="#E6CDAC"/>
+    <rect x="540"  y="300" width="200" height="64" rx="3" fill="#DCE4EA"/>
+    <rect x="780"  y="300" width="200" height="64" rx="3" fill="#DCE4EA"/>
+    <rect x="1020" y="300" width="200" height="64" rx="3" fill="#EFB358"/>
+  </g>
+  <g font-size="11.5" fill="#66665F">
+    <text x="76" y="325">Landing volume</text><text x="316" y="325">nyctaxi_01_bronze</text>
+    <text x="556" y="325">nyctaxi_02_silver</text><text x="796" y="325">nyctaxi_02_silver</text>
+    <text x="1036" y="325">nyctaxi_03_gold</text>
+  </g>
+  <g font-size="15" font-weight="600" fill="#1C1C1A">
+    <text x="76" y="347">Yellow trip parquet</text><text x="316" y="347">yellow_trips_raw</text>
+    <text x="556" y="347">yellow_trip_cleansed</text><text x="796" y="347">yellow_trips_enriched</text>
+    <text x="1036" y="347">daily_trip_summary</text>
+  </g>
+
+  <!-- row 2 -->
+  <g stroke="#8E8E86" stroke-width="1">
+    <rect x="60"   y="440" width="200" height="64" rx="3" fill="#E9E9E4"/>
+    <rect x="540"  y="440" width="200" height="64" rx="3" fill="#DCE4EA"/>
+    <rect x="1020" y="440" width="200" height="64" rx="3" fill="#B7CFA8"/>
+  </g>
+  <g font-size="11.5" fill="#66665F">
+    <text x="76" y="465">Landing volume</text><text x="556" y="465">nyctaxi_02_silver</text>
+    <text x="1036" y="465">nyctaxi_04_export</text>
+  </g>
+  <g font-size="15" font-weight="600" fill="#1C1C1A">
+    <text x="76" y="487">taxi_zone_lookup.csv</text><text x="556" y="487">taxi_zone_lookup</text>
+    <text x="1036" y="487">yellow_trips_export</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#6E6E68" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+    <path d="M260 332 H292"/>
+    <path d="M500 332 H532"/>
+    <path d="M740 332 H772"/>
+    <path d="M980 332 H1012"/>
+    <path d="M980 332 C 998 332 994 472 1012 472"/>
+    <path d="M260 472 H532"/>
+    <path d="M740 472 C 762 472 758 332 772 332"/>
+  </g>
+
+  <!-- note B: SCD2 -->
+  <rect x="404" y="566" width="440" height="46" rx="3" fill="none" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="428" y="594" font-size="13.5" fill="#3A3A36">&#8226; Slowly Changing Dimensions Type 2 for the Silver layer</text>
+  <path d="M640 566 V504" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
+
+  <!-- note C: external table -->
+  <rect x="876" y="566" width="404" height="94" rx="3" fill="none" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="898" y="594" font-size="13.5" fill="#3A3A36">&#8226; External table in JSON format that points to the</text>
+  <text x="910" y="614" font-size="13.5" fill="#3A3A36">data team&#8217;s storage account</text>
+  <text x="898" y="640" font-size="13.5" fill="#3A3A36">&#8226; Partitioned by vendor and month</text>
+  <path d="M1120 566 V522" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
+
+  <!-- legend -->
+  <g transform="translate(60,700)">
+    <g stroke="#8E8E86" stroke-width="1">
+      <rect x="0"   y="0" width="13" height="13" rx="2" fill="#E9E9E4"/>
+      <rect x="104" y="0" width="13" height="13" rx="2" fill="#E6CDAC"/>
+      <rect x="212" y="0" width="13" height="13" rx="2" fill="#DCE4EA"/>
+      <rect x="312" y="0" width="13" height="13" rx="2" fill="#EFB358"/>
+      <rect x="400" y="0" width="13" height="13" rx="2" fill="#B7CFA8"/>
+    </g>
+    <g font-size="12.5" fill="#5E5E58">
+      <text x="21" y="11">Landing</text><text x="125" y="11">Bronze</text><text x="233" y="11">Silver</text>
+      <text x="333" y="11">Gold</text><text x="421" y="11">Export &#8212; new in part 4</text>
+    </g>
+    <text x="980" y="11" font-size="12.5" fill="#8A8A82">catalog: nyctaxi_workspace</text>
+  </g>
+
+</svg>

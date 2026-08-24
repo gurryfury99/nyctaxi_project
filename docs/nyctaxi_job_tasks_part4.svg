@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 500" width="1400" height="500" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6E6E68"/>
+    </marker>
+    <marker id="art" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#3F7A54"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="500" fill="#FCFCFA"/>
+
+  <text x="700" y="42" text-anchor="middle" font-size="27" font-weight="600" fill="#1C1C1A">nyctaxi_job &#8212; task graph</text>
+  <text x="700" y="68" text-anchor="middle" font-size="15" fill="#5E5E58">Nine notebook tasks and two if/else conditions</text>
+
+  <!-- new in part 4 -->
+  <rect x="1105" y="291" width="225" height="110" rx="4" fill="none" stroke="#3F7A54" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="1105" y="282" font-size="12.5" fill="#3F7A54">New in part 4</text>
+
+  <!-- lookup lane -->
+  <g stroke="#8E8E86" stroke-width="1">
+    <rect x="248" y="120" width="195" height="72" rx="3" fill="#E9E9E4"/>
+    <rect x="466" y="120" width="195" height="72" rx="3" fill="#DCE9EE"/>
+    <rect x="684" y="120" width="195" height="72" rx="3" fill="#DCE4EA"/>
+    <rect x="1120" y="120" width="195" height="72" rx="3" fill="#EFB358"/>
+  </g>
+  <g font-size="11.5" fill="#66665F">
+    <text x="264" y="142">Notebook</text><text x="482" y="142">If/else condition</text>
+    <text x="700" y="142">Notebook</text><text x="1136" y="142">Notebook</text>
+  </g>
+  <g font-size="13.5" font-weight="600" fill="#1C1C1A">
+    <text x="264" y="163">00_ingest_lookup</text>
+    <text x="482" y="163">continue_downstream</text><text x="482" y="180">_lookup</text>
+    <text x="700" y="163">02_taxi_zone_lookup</text>
+    <text x="1136" y="163">03_daily_trip_summary</text>
+  </g>
+
+  <!-- converge lane -->
+  <g stroke="#8E8E86" stroke-width="1">
+    <rect x="902" y="215" width="195" height="72" rx="3" fill="#DCE4EA"/>
+  </g>
+  <text x="918" y="237" font-size="11.5" fill="#66665F">Notebook</text>
+  <text x="918" y="258" font-size="13.5" font-weight="600" fill="#1C1C1A">02_yellow_trips_enriched</text>
+
+  <!-- yellow lane -->
+  <g stroke="#8E8E86" stroke-width="1">
+    <rect x="30"   y="310" width="195" height="72" rx="3" fill="#E9E9E4"/>
+    <rect x="248"  y="310" width="195" height="72" rx="3" fill="#DCE9EE"/>
+    <rect x="466"  y="310" width="195" height="72" rx="3" fill="#E6CDAC"/>
+    <rect x="684"  y="310" width="195" height="72" rx="3" fill="#DCE4EA"/>
+    <rect x="1120" y="310" width="195" height="72" rx="3" fill="#B7CFA8"/>
+  </g>
+  <g font-size="11.5" fill="#66665F">
+    <text x="46" y="332">Notebook</text><text x="264" y="332">If/else condition</text>
+    <text x="482" y="332">Notebook</text><text x="700" y="332">Notebook</text>
+    <text x="1136" y="332">Notebook</text>
+  </g>
+  <g font-size="13.5" font-weight="600" fill="#1C1C1A">
+    <text x="46" y="353">00_ingest_yellow_trips</text>
+    <text x="264" y="353">continue_downstream</text><text x="264" y="370">_yellow_trips</text>
+    <text x="482" y="353">01_yellow_trips_raw</text>
+    <text x="700" y="353">02_yellow_trips_cleansed</text>
+    <text x="1136" y="353">04_yellow_trips_export</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#6E6E68" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+    <path d="M443 156 H458"/>
+    <path d="M225 346 H240"/>
+    <path d="M661 346 H676"/>
+    <path d="M879 156 C 894 156 887 251 902 251"/>
+    <path d="M879 346 C 894 346 887 251 902 251"/>
+    <path d="M1097 251 C 1104 251 1105 156 1112 156"/>
+    <path d="M1097 251 C 1104 251 1105 346 1112 346"/>
+  </g>
+
+  <!-- true branches -->
+  <g stroke="#3F7A54" stroke-width="1.4" fill="none" marker-end="url(#art)">
+    <path d="M661 168 C 672 168 665 156 676 156"/>
+    <path d="M443 358 C 454 358 447 346 458 346"/>
+  </g>
+  <g font-size="11" fill="#3F7A54">
+    <text x="666" y="145">True</text><text x="448" y="335">True</text>
+  </g>
+
+  <!-- false branches -->
+  <g stroke="#9B6A70" stroke-width="1.2" stroke-dasharray="4 3" fill="none">
+    <path d="M661 182 C 678 182 686 208 700 212"/>
+    <path d="M443 372 C 460 372 468 398 482 402"/>
+  </g>
+  <g font-size="11" fill="#9B6A70">
+    <text x="706" y="216">False &#8212; downstream skipped</text>
+    <text x="488" y="406">False &#8212; downstream skipped</text>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(30,455)">
+    <g stroke="#8E8E86" stroke-width="1">
+      <rect x="0"   y="0" width="13" height="13" rx="2" fill="#E9E9E4"/>
+      <rect x="104" y="0" width="13" height="13" rx="2" fill="#DCE9EE"/>
+      <rect x="216" y="0" width="13" height="13" rx="2" fill="#E6CDAC"/>
+      <rect x="324" y="0" width="13" height="13" rx="2" fill="#DCE4EA"/>
+      <rect x="424" y="0" width="13" height="13" rx="2" fill="#EFB358"/>
+      <rect x="512" y="0" width="13" height="13" rx="2" fill="#B7CFA8"/>
+    </g>
+    <g font-size="12.5" fill="#5E5E58">
+      <text x="21" y="11">Landing</text><text x="125" y="11">Condition</text><text x="237" y="11">Bronze</text>
+      <text x="345" y="11">Silver</text><text x="445" y="11">Gold</text><text x="533" y="11">Export</text>
+    </g>
+    <text x="1060" y="11" font-size="12.5" fill="#8A8A82">source: git provider, branch main</text>
+  </g>
+
+</svg>

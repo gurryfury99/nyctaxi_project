@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 790" width="1240" height="790" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+
+  <rect x="0" y="0" width="1240" height="790" fill="#FCFCFA"/>
+
+  <text x="70" y="52" font-size="12.5" letter-spacing="1.6" fill="#8A8A82">NYC TAXI PROJECT &#8212; PART 4</text>
+  <line x1="70" y1="66" x2="1170" y2="66" stroke="#DCDCD6" stroke-width="1"/>
+
+  <g font-size="15" fill="#2A2A26">
+
+    <!-- Requirement -->
+    <text x="70" y="108"><tspan font-weight="600">Requirement:</tspan> A data team has asked for an export of the <tspan font-weight="600">yellow_trips_enriched</tspan> (Silver) table, partitioned by</text>
+    <text x="70" y="134"><tspan font-weight="600">vendor</tspan> and <tspan font-weight="600">month</tspan>, delivered as <tspan font-weight="600">JSON</tspan> into their Azure Data Lake Storage account. They cannot accept</text>
+    <text x="70" y="160">data outside their account.</text>
+
+    <!-- Objective -->
+    <text x="70" y="206"><tspan font-weight="600">Objective:</tspan> Deliver a partitioned JSON export of <tspan font-weight="600">yellow_trips_enriched</tspan> every month into their ADLS Gen2</text>
+    <text x="70" y="232">account named <tspan font-weight="600">nyctaxistorage</tspan> (or similar), container <tspan font-weight="600">nyctaxi-yellow</tspan>, under the folder <tspan font-weight="600">nyctaxi_yellow_export/</tspan>.</text>
+
+  </g>
+
+  <text x="70" y="292" font-size="18" font-weight="600" fill="#1C1C1A">What we will build.</text>
+
+  <g font-size="15" fill="#2A2A26">
+
+    <text x="70" y="334" font-weight="600" fill="#8A6A22">1.</text>
+    <text x="102" y="334"><tspan font-weight="600">Azure storage:</tspan> We&#8217;ll create an ADLS Gen2 account named <tspan font-weight="600">nyctaxistorage</tspan> (or similar) with</text>
+    <text x="102" y="360">container <tspan font-weight="600">nyctaxi-yellow</tspan> to simulate the account that the data team would have.</text>
+
+    <text x="70" y="406" font-weight="600" fill="#8A6A22">2.</text>
+    <text x="102" y="406"><tspan font-weight="600">Unity Catalog linkage:</tspan> We&#8217;ll link this location to Databricks via a <tspan font-weight="600">Storage Credential</tspan> and</text>
+    <text x="102" y="432"><tspan font-weight="600">External Location</tspan> that point to the container.</text>
+
+    <text x="70" y="478" font-weight="600" fill="#8A6A22">3.</text>
+    <text x="102" y="478"><tspan font-weight="600">Export schema &amp; objects:</tspan> In our <tspan font-weight="600">nyctaxi_workspace</tspan> catalog we&#8217;ll create a new schema</text>
+    <text x="102" y="504"><tspan font-weight="600">nyctaxi_04_export</tspan>, and an <tspan font-weight="600">external table</tspan> over the export path so our internal Databricks</text>
+    <text x="102" y="530">engineers can browse, query, and manage access from within Databricks.</text>
+
+    <text x="70" y="576" font-weight="600" fill="#8A6A22">4.</text>
+    <text x="102" y="576"><tspan font-weight="600">Export job / notebook:</tspan> To our project code we&#8217;ll add a notebook task to <tspan font-weight="600">nyctaxi_job</tspan> that will</text>
+    <text x="102" y="602">upload the JSON files to the location every time the pipeline runs, which is once a month. We&#8217;ll</text>
+    <text x="102" y="628">register an external table that points to the location so we can append the data each time.</text>
+
+    <text x="70" y="674" font-weight="600" fill="#8A6A22">5.</text>
+    <text x="102" y="674"><tspan font-weight="600">One-off scripts:</tspan> We&#8217;ll also create initial load scripts to load the historical data.</text>
+
+  </g>
+
+  <!-- adaptation note -->
+  <rect x="70" y="706" width="1100" height="52" rx="3" fill="none" stroke="#A8A8A0" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="92" y="729" font-size="13" fill="#4A4A44"><tspan font-weight="600">Adapted from the lecture:</tspan> catalog is <tspan font-weight="600">nyctaxi_workspace</tspan> and every schema carries the <tspan font-weight="600">nyctaxi_</tspan> prefix, so the export</text>
+  <text x="92" y="748" font-size="13" fill="#4A4A44">schema is <tspan font-weight="600">nyctaxi_04_export</tspan>, not <tspan font-weight="600">04_export</tspan>. The silver table is <tspan font-weight="600">yellow_trip_cleansed</tspan>, singular.</text>
+
+</svg>
