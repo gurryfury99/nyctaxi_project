@@ -78,3 +78,35 @@ spark.sql("""
     FROM nyctaxi_workspace.nyctaxi_02_silver.taxi_zone_lookup
     GROUP BY 1
 """).display()
+
+# COMMAND ----------
+
+# MAGIC %md ### Reconciliation - enriched vs export
+# MAGIC
+# MAGIC The export notebook reads from `yellow_trips_enriched`, so that is the table
+# MAGIC to reconcile against - not cleansed, which is one hop further upstream.
+# MAGIC
+# MAGIC Every row in `difference` should be zero.
+
+# COMMAND ----------
+
+spark.sql("""
+    WITH e AS (
+        SELECT date_format(tpep_pickup_datetime, 'yyyy-MM') AS year_month,
+               COUNT(*) AS enriched_records
+        FROM nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched
+        GROUP BY 1
+    ),
+    x AS (
+        SELECT year_month,
+               COUNT(*) AS export_records
+        FROM nyctaxi_workspace.nyctaxi_04_export.yellow_trips_export
+        GROUP BY 1
+    )
+    SELECT e.year_month,
+           e.enriched_records,
+           x.export_records,
+           e.enriched_records - x.export_records AS difference
+    FROM e FULL OUTER JOIN x USING (year_month)
+    ORDER BY year_month
+""").display()
