@@ -83,8 +83,10 @@ spark.sql("""
 
 # MAGIC %md ### Reconciliation - enriched vs export
 # MAGIC
-# MAGIC The export notebook reads from `yellow_trips_enriched`, so that is the table
-# MAGIC to reconcile against - not cleansed, which is one hop further upstream.
+# MAGIC The export notebook reads from `yellow_trips_enriched`, so this isolates the
+# MAGIC export write. Comparing `yellow_trip_cleansed` against the export instead
+# MAGIC spans the enriched joins too - both are left joins, so the counts should
+# MAGIC still match.
 # MAGIC
 # MAGIC Every row in `difference` should be zero.
 
