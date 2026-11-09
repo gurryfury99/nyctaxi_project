@@ -1,0 +1,5 @@
+# Local development and tests (Databricks provides Spark itself on the cluster)
+pyspark>=4.0
+pytest>=8.0
+python-dateutil>=2.8
+pyarrow

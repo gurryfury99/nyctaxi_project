@@ -2,96 +2,58 @@
 import sys
 import os
 
-
 project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from pyspark.sql.functions import col, when, timestamp_diff
-from datetime import date
-from dateutil.relativedelta import relativedelta
-from modules.utils.date_utils import get_month_start_n_months_ago
+from modules.utils.date_utils import resolve_target_month, month_window_for
+from modules.transformations.cleansing import cleanse_trips
+from modules.utils.delta_io import write_replace_where
 
 # COMMAND ----------
 
+dbutils.widgets.text("target_month", "")
+dbutils.widgets.text("months_ago", "3")
 
-# The target month is the first month our backfill did not cover. The backfill
-# ran 2025-12 .. 2026-04, so the month we do not have is 2026-05. The lecturer
-# uses 2 (TLC's publishing lag); for us 2 would jump to 2026-06 and leave a gap.
-target_month_start = get_month_start_n_months_ago(3)
+target_month = resolve_target_month(
+    dbutils.widgets.get("target_month"), int(dbutils.widgets.get("months_ago"))
+)
 
-# First day of the month after it - the upper bound of the window.
-next_month_start = get_month_start_n_months_ago(2)
+# [start, end): first day of the month (inclusive) to first day of the next month (exclusive)
+month_start, month_end = month_window_for(target_month)
 
 # COMMAND ----------
 
-
-df = spark.read.table("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw").filter(
-    f"tpep_pickup_datetime >= '{target_month_start}' AND tpep_pickup_datetime < '{next_month_start}'"
+# Only this month's source file. A few trips in each file fall outside its own month
+# (some are dated as far back as 2008); those are quarantined below, not loaded.
+raw = spark.read.table("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw").filter(
+    f"source_month = '{target_month}'"
 )
 
 # COMMAND ----------
 
-# Select and transform fields, decoding codes and computing duration
-df = df.select(
-    # Map numeric VendorID to vendor names
-    when(col("VendorID") == 1, "Creative Mobile Technologies, LLC")
-        .when(col("VendorID") == 2, "Curb Mobility, LLC")
-        .when(col("VendorID") == 6, "Myle Technologies Inc")
-        .when(col("VendorID") == 7, "Helix")
-        .otherwise("Unknown")
-        .alias("vendor"),
-
-    "tpep_pickup_datetime",
-    "tpep_dropoff_datetime",
-
-    timestamp_diff(
-        "MINUTE",
-        col("tpep_pickup_datetime"),
-        col("tpep_dropoff_datetime")
-    ).alias("trip_duration"),
-
-    "passenger_count",
-    "trip_distance",
-
-    when(col("RatecodeID") == 1, "Standard Rate")
-        .when(col("RatecodeID") == 2, "JFK")
-        .when(col("RatecodeID") == 3, "Newark")
-        .when(col("RatecodeID") == 4, "Nassau or Westchester")
-        .when(col("RatecodeID") == 5, "Negotiated Fare")
-        .when(col("RatecodeID") == 6, "Group Ride")
-        .otherwise("Unknown")
-        .alias("rate_type"),
-
-    "store_and_fwd_flag",
-
-    col("PULocationID").alias("pu_location_id"),
-    col("DOLocationID").alias("do_location_id"),
-
-    when(col("payment_type") == 0, "Flex Fare trip")
-        .when(col("payment_type") == 1, "Credit card")
-        .when(col("payment_type") == 2, "Cash")
-        .when(col("payment_type") == 3, "No charge")
-        .when(col("payment_type") == 4, "Dispute")
-        .when(col("payment_type") == 6, "Voided trip")
-        .otherwise("Unknown")
-        .alias("payment_type"),
-
-    "fare_amount",
-    "extra",
-    "mta_tax",
-    "tolls_amount",
-    "improvement_surcharge",
-    "total_amount",
-    "congestion_surcharge",
-    col("Airport_fee").alias("airport_fee"),
-    "cbd_congestion_fee",
-    "processed_timestamp"
-)
-
-display(df)
+# Validate every row. Clean rows continue to silver; rejected rows are kept, with the
+# reason(s), in a quarantine table so nothing disappears silently.
+clean, quarantine = cleanse_trips(raw, str(month_start), str(month_end))
 
 # COMMAND ----------
 
-df.write.mode("append").saveAsTable("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed")
+write_replace_where(
+    clean,
+    "nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed",
+    f"tpep_pickup_datetime >= '{month_start}' AND tpep_pickup_datetime < '{month_end}'",
+)
+
+write_replace_where(
+    quarantine,
+    "nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_quarantine",
+    f"source_month = '{target_month}'",
+)
+
+# COMMAND ----------
+
+# Quick reconciliation printed in the job output: clean + quarantined must equal raw.
+n_raw, n_clean, n_quarantine = raw.count(), clean.count(), quarantine.count()
+print(f"{target_month}: raw={n_raw:,} clean={n_clean:,} quarantined={n_quarantine:,}")
+assert n_clean + n_quarantine == n_raw, "Rows were lost between bronze and silver"

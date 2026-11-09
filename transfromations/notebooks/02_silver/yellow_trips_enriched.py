@@ -7,93 +7,41 @@ project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from pyspark.sql.functions import col
-from datetime import date
-from dateutil.relativedelta import relativedelta
-from modules.utils.date_utils import get_month_start_n_months_ago
+from modules.utils.date_utils import resolve_target_month, month_window_for
+from modules.transformations.enrichment import enrich_with_zones
+from modules.utils.delta_io import write_replace_where
 
 # COMMAND ----------
 
+dbutils.widgets.text("target_month", "")
+dbutils.widgets.text("months_ago", "3")
 
-# The first month our backfill did not cover: 2026-05.
-target_month_start = get_month_start_n_months_ago(3)
+target_month = resolve_target_month(
+    dbutils.widgets.get("target_month"), int(dbutils.widgets.get("months_ago"))
+)
+month_start, month_end = month_window_for(target_month)
 
 # COMMAND ----------
 
+# Same [start, end) window as the cleansing step (the old version had no upper bound).
 df_trips = spark.read.table("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed").filter(
-    f"tpep_pickup_datetime >= '{target_month_start}'"
+    f"tpep_pickup_datetime >= '{month_start}' AND tpep_pickup_datetime < '{month_end}'"
 )
 
-# Load taxi zone lookup data from the Silver layer
+# Zone dimension (SCD2). enrich_with_zones uses only the current version of each zone,
+# so zones with history can no longer multiply trips.
 df_zones = spark.read.table("nyctaxi_workspace.nyctaxi_02_silver.taxi_zone_lookup")
 
 # COMMAND ----------
 
-# Join trips with pickup zone details (borough and zone name)
-df_join_1 = df_trips.join(
-    df_zones,
-    df_trips.pu_location_id == df_zones.location_id,
-    "left"
-).select(
-    df_trips.vendor,
-    df_trips.tpep_pickup_datetime,
-    df_trips.tpep_dropoff_datetime,
-    df_trips.trip_duration,
-    df_trips.passenger_count,
-    df_trips.trip_distance,
-    df_trips.rate_type,
-    df_zones.borough.alias("pu_borough"),
-    df_zones.zone.alias("pu_zone"),
-    df_trips.do_location_id,
-    df_trips.payment_type,
-    df_trips.fare_amount,
-    df_trips.extra,
-    df_trips.mta_tax,
-    df_trips.tolls_amount,
-    df_trips.improvement_surcharge,
-    df_trips.total_amount,
-    df_trips.congestion_surcharge,
-    df_trips.airport_fee,
-    df_trips.cbd_congestion_fee,
-    df_trips.processed_timestamp
-)
+df_enriched = enrich_with_zones(df_trips, df_zones)
 
-display(df_join_1)
+display(df_enriched)
 
 # COMMAND ----------
 
-# Join again on the dropoff location to add dropoff borough and zone
-df_join_final = df_join_1.join(
-    df_zones,
-    df_join_1.do_location_id == df_zones.location_id,
-    "left"
-).select(
-    df_join_1.vendor,
-    df_join_1.tpep_pickup_datetime,
-    df_join_1.tpep_dropoff_datetime,
-    df_join_1.trip_duration,
-    df_join_1.passenger_count,
-    df_join_1.trip_distance,
-    df_join_1.rate_type,
-    df_join_1.pu_borough,
-    df_zones.borough.alias("do_borough"),
-    df_join_1.pu_zone,
-    df_zones.zone.alias("do_zone"),
-    df_join_1.payment_type,
-    df_join_1.fare_amount,
-    df_join_1.extra,
-    df_join_1.mta_tax,
-    df_join_1.tolls_amount,
-    df_join_1.improvement_surcharge,
-    df_join_1.total_amount,
-    df_join_1.congestion_surcharge,
-    df_join_1.airport_fee,
-    df_join_1.cbd_congestion_fee,
-    df_join_1.processed_timestamp
+write_replace_where(
+    df_enriched,
+    "nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched",
+    f"tpep_pickup_datetime >= '{month_start}' AND tpep_pickup_datetime < '{month_end}'",
 )
-
-display(df_join_final)
-
-# COMMAND ----------
-
-df_join_final.write.mode("append").saveAsTable("nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched")

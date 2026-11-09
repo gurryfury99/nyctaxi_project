@@ -41,18 +41,20 @@ print(f"Mode         : {'DRY RUN - nothing will be deleted' if DRY_RUN else 'LIV
 
 # COMMAND ----------
 
-# Every table in the pipeline, with the column that carries the trip date.
+# Every table in the pipeline, with the predicate that selects the rows to delete.
 # yellow_trip_cleansed is singular - that is the actual table name in this project.
+# Bronze and quarantine are keyed by source_month ('YYYY-MM'); the rest by trip date.
+month_str = date_from.strftime("%Y-%m")
 TABLES = [
-    ("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw",      "tpep_pickup_datetime"),
-    ("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed",  "tpep_pickup_datetime"),
-    ("nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched", "tpep_pickup_datetime"),
-    ("nyctaxi_workspace.nyctaxi_03_gold.daily_trip_summary",      "pickup_date"),
+    ("nyctaxi_workspace.nyctaxi_01_bronze.yellow_trips_raw",       f"source_month >= '{month_str}'"),
+    ("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_cleansed",   f"tpep_pickup_datetime >= '{date_from}'"),
+    ("nyctaxi_workspace.nyctaxi_02_silver.yellow_trip_quarantine", f"source_month >= '{month_str}'"),
+    ("nyctaxi_workspace.nyctaxi_02_silver.yellow_trips_enriched",  f"tpep_pickup_datetime >= '{date_from}'"),
+    ("nyctaxi_workspace.nyctaxi_03_gold.daily_trip_summary",       f"pickup_date >= '{date_from}'"),
 ]
 
 
-def purge(table, date_column):
-    predicate = f"{date_column} >= '{date_from}'"
+def purge(table, predicate):
     rows = spark.read.table(table).filter(predicate).count()
 
     if DRY_RUN:
@@ -64,17 +66,18 @@ def purge(table, date_column):
 
 # COMMAND ----------
 
-for table, date_column in TABLES:
-    purge(table, date_column)
+for table, predicate in TABLES:
+    purge(table, predicate)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## Delete the landing file
 # MAGIC
-# MAGIC The ingest notebook skips the download when the Parquet file already exists,
-# MAGIC and sets `continue_downstream` to `no`. To make the job actually reprocess
-# MAGIC the month, the landing folder has to go too.
+# MAGIC Deleting the landing folder is optional now. The pipeline loads each month with
+# MAGIC `replaceWhere`, so it is safe to re-run, and the ingest notebook only skips a month
+# MAGIC that is already in bronze. Delete the folder only if you want to re-download
+# MAGIC the file from TLC as well.
 
 # COMMAND ----------
 
