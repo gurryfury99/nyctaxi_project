@@ -1,130 +1,67 @@
 # Databricks notebook source
-from pyspark.sql.functions import current_timestamp, lit, col
-from pyspark.sql.types import TimestampType, IntegerType
+import sys
+import os
 
-# COMMAND ----------
+project_root = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 
-# Read from 00_landing, the same volume ingest_lookup writes the CSV to.
-# The initial-load notebooks used nyctaxi_landing; the live pipeline is on 00_landing.
-df = spark.read.format("csv").option("header", True).load("/Volumes/nyctaxi_workspace/00_landing/data_sources/lookup/taxi_zone_lookup.csv")
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
-# COMMAND ----------
-
-display(df)
-
-# COMMAND ----------
-
-df = df.select(
-    col("LocationID").cast(IntegerType()).alias("location_id"),
-    col("Borough").alias("borough"),
-    col("Zone").alias("zone"),
-    col("service_zone"),
-    current_timestamp().alias("effective_date"),
-    lit(None).cast(TimestampType()).alias("end_date"))
-
-# COMMAND ----------
-
-display(df)
-
-# COMMAND ----------
-
-spark.sql("USE CATALOG nyctaxi_workspace")
-spark.sql("USE SCHEMA nyctaxi_02_silver")
-
-df.write \
-  .mode("overwrite") \
-  .option("overwriteSchema", "true") \
-  .saveAsTable("taxi_zone_lookup")
-
-# COMMAND ----------
-
-display(spark.read.table("nyctaxi_workspace.nyctaxi_02_silver.taxi_zone_lookup"))
-
-# COMMAND ----------
-
-from delta.tables import DeltaTable
 from datetime import datetime
 
-dt = DeltaTable.forName(
-    spark,
-    "nyctaxi_workspace.nyctaxi_02_silver.taxi_zone_lookup"
+from modules.transformations.zones import (
+    ZONE_SCHEMA,
+    empty_zone_table,
+    prepare_zone_source,
+    scd2_next_state,
 )
 
-end_timestamp = datetime.now()
+# COMMAND ----------
+
+ZONE_TABLE = "nyctaxi_workspace.nyctaxi_02_silver.taxi_zone_lookup"
+
+# Read from 00_landing, the same volume ingest_lookup writes the CSV to.
+raw = (
+    spark.read.format("csv")
+    .option("header", True)
+    .load("/Volumes/nyctaxi_workspace/00_landing/data_sources/lookup/taxi_zone_lookup.csv")
+)
+
+display(raw)
 
 # COMMAND ----------
 
-# PASS 1: Close active records whose attributes changed
-
-dt.alias("t") \
-    .merge(
-        source=df.alias("s"),
-        condition="""
-            t.location_id = s.location_id
-            AND t.end_date IS NULL
-            AND (
-                t.borough != s.borough
-                OR t.zone != s.zone
-                OR t.service_zone != s.service_zone
-            )
-        """
-    ) \
-    .whenMatchedUpdate(
-        set={
-            "end_date": lit(end_timestamp).cast(TimestampType())
-        }
-    ) \
-    .execute()
+as_of = datetime.now()
+incoming = prepare_zone_source(raw, as_of)
 
 # COMMAND ----------
 
-# PASS 2: Insert the new current versions of changed records
-
-closed_ids = [
-    row.location_id
-    for row in dt.toDF()
-        .where(f"end_date = '{end_timestamp}'")
-        .select("location_id")
-        .collect()
-]
-
-if len(closed_ids) == 0:
-    print("No updated records to insert")
+# The table as it is now. First run: it does not exist yet, so start from an empty one.
+# (The previous version overwrote the table with the fresh CSV here, which threw away
+# the very history this table exists to keep.)
+if spark.catalog.tableExists(ZONE_TABLE):
+    current = spark.read.table(ZONE_TABLE).select(ZONE_SCHEMA.fieldNames())
 else:
-    dt.alias("t") \
-        .merge(
-            source=df.alias("s"),
-            condition=f"s.location_id IN ({','.join(map(str, closed_ids))})"
-        ) \
-        .whenNotMatchedInsert(
-            values={
-                "location_id": "s.location_id",
-                "borough": "s.borough",
-                "zone": "s.zone",
-                "service_zone": "s.service_zone",
-                "effective_date": "s.effective_date",
-                "end_date": "NULL"
-            }
-        ) \
-        .execute()
+    current = empty_zone_table(spark)
 
 # COMMAND ----------
 
-# PASS 3: Insert completely new locations
+# SCD2: close changed rows, add their new versions, add brand-new locations, keep history.
+# Re-running with an unchanged CSV leaves the table exactly as it was.
+next_state = scd2_next_state(current, incoming, as_of)
 
-dt.alias("t") \
-    .merge(
-        source=df.alias("s"),
-        condition="t.location_id = s.location_id"
-    ) \
-    .whenNotMatchedInsert(
-        values={
-            "location_id": "s.location_id",
-            "borough": "s.borough",
-            "zone": "s.zone",
-            "service_zone": "s.service_zone",
-            "effective_date": "s.effective_date",
-            "end_date": "NULL"
-        }
-    ) \
-    .execute()
+# COMMAND ----------
+
+# The table is ~265 rows, so materialise the new state before writing. That avoids
+# reading and overwriting the same table in a single Spark plan.
+# Overwrite is safe here because next_state already contains the full history.
+(
+    spark.createDataFrame(next_state.collect(), ZONE_SCHEMA)
+    .write.mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(ZONE_TABLE)
+)
+
+# COMMAND ----------
+
+display(spark.read.table(ZONE_TABLE).orderBy("location_id", "effective_date"))
